@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+.venv/
+
+# Environment variables
+.env
+.flaskenv
+
+# Data and Models
+models/
+*.joblib
+
+# Jupyter Notebooks and related files
+.ipynb_checkpoints/
+*.ipynb
+
+# Docker
+.dockerignore
+Dockerfile.dev
