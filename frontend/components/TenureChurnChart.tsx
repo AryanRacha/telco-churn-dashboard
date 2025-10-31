@@ -23,7 +23,7 @@ export default function TenureChurnChart({ data }: { data: Customer[] }) {
     let stayCount = 0;
 
     data.forEach((customer) => {
-      if (customer.Churn === 1) {
+      if (customer.Churn === "Yes") {
         churnTotal += customer.tenure;
         churnCount += 1;
       } else {

@@ -1,31 +1,72 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { getExplorerData } from "@/lib/api";
+import { useState, useEffect } from "react";
 import { Customer } from "@/lib/types";
+import { getExplorerData } from "@/lib/api";
+import Image from "next/image";
+import DynamicParameterChart from "@/components/DynamicParameterChart";
 
-// We'll import our charts here later
-import ChurnByContractChart from "@/components/ChurnByContractChart";
-import TenureChurnChart from "@/components/TenureChurnChart"; // We can add this import now
+const IMAGE_API_URL = "http://127.0.0.1:8000/api/images";
+
+const categoricalParameters = [
+  { value: "Contract", label: "Contract Type" },
+  { value: "InternetService", label: "Internet Service" },
+  { value: "PaymentMethod", label: "Payment Method" },
+  { value: "TechSupport", label: "Tech Support" },
+  { value: "OnlineSecurity", label: "Online Security" },
+  { value: "DeviceProtection", label: "Device Protection" },
+  { value: "OnlineBackup", label: "Online Backup" },
+  { value: "StreamingTV", label: "Streaming TV" },
+  { value: "StreamingMovies", label: "Streaming Movies" },
+  { value: "SeniorCitizen", label: "Senior Citizen" },
+  { value: "Partner", label: "Partner" },
+  { value: "Dependents", label: "Dependents" },
+  { value: "PhoneService", label: "Phone Service" },
+  { value: "MultipleLines", label: "Multiple Lines" },
+  { value: "gender", label: "Gender" },
+  { value: "PaperlessBilling", label: "Paperless Billing" },
+];
+
+// --- A simple component to display static charts ---
+const StaticChartCard = ({
+  title,
+  description,
+  imgSrc,
+}: {
+  title: string;
+  description: string;
+  imgSrc: string;
+}) => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <h3 className="text-xl font-semibold mb-3">{title}</h3>
+    <p className="text-sm text-gray-500 mb-4">{description}</p>
+    <div className="relative w-full h-80">
+      <Image
+        src={`${IMAGE_API_URL}/${imgSrc}`}
+        alt={title}
+        fill
+        style={{ objectFit: "contain" }}
+        unoptimized={true} // <--- THIS IS THE FIX
+      />
+    </div>
+  </div>
+);
 
 export default function ExplorerPage() {
-  // --- State Hooks ---
   const [allData, setAllData] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedParameter, setSelectedParameter] = useState(
+    categoricalParameters[0].value
+  );
 
-  // --- Filter State Hooks ---
-  const [contractFilter, setContractFilter] = useState("All");
-  const [internetServiceFilter, setInternetServiceFilter] = useState("All");
-
-  // --- Data Fetching Effect ---
   useEffect(() => {
     async function fetchData() {
       try {
         const data = await getExplorerData();
         setAllData(data);
       } catch (err) {
-        setError("Failed to fetch data from the API.");
+        setError("Failed to fetch explorer data.");
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -34,115 +75,100 @@ export default function ExplorerPage() {
     fetchData();
   }, []);
 
-  // --- Data Filtering Logic ---
-  const filteredData = useMemo(() => {
-    return allData.filter((customer) => {
-      // Check contract filter
-      const contractMatch =
-        contractFilter === "All" || customer.Contract === contractFilter;
-
-      // Check internet service filter
-      const internetServiceMatch =
-        internetServiceFilter === "All" ||
-        customer.InternetService === internetServiceFilter;
-
-      return contractMatch && internetServiceMatch;
-    });
-  }, [allData, contractFilter, internetServiceFilter]);
-
-  // --- Loading and Error Handling ---
   if (isLoading) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold">Loading Explorer Data...</h1>
+      <div className="p-10 flex justify-center items-center h-screen">
+        <h1 className="text-2xl font-semibold text-gray-700">
+          Loading explorer data...
+        </h1>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-10">
         <h1 className="text-3xl font-bold text-red-600">Error</h1>
         <p>{error}</p>
       </div>
     );
   }
 
-  // --- Main Page Render ---
   return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold mb-4">🗺️ Data Explorer</h1>
-      <p className="text-lg text-gray-600 mb-6">
-        Interactively filter your customer data to find insights.
-      </p>{" "}
-      {/* <--- 
-        
-      {/* --- Filter Bar --- */}
-      <div className="flex space-x-4 p-4 bg-white rounded-lg shadow mb-8">
-        {/* Filter 1: Contract Type */}
-        <div>
-          <label
-            htmlFor="contract-filter"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Contract Type
-          </label>
-          <select
-            id="contract-filter"
-            value={contractFilter}
-            onChange={(e) => setContractFilter(e.target.value)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option>All</option>
-            <option>Month-to-month</option>
-            <option>One year</option>
-            <option>Two year</option>
-          </select>
-        </div>
+    <main className="p-10">
+      <h1 className="text-4xl font-bold mb-4">📊 Dataset Explorer</h1>
+      <p className="text-lg text-gray-600 mb-8">
+        This is your interactive dashboard for Exploratory Data Analysis (EDA).
+      </p>
 
-        {/* Filter 2: Internet Service */}
-        <div>
-          <label
-            htmlFor="internet-filter"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Internet Service
-          </label>
-          <select
-            id="internet-filter"
-            value={internetServiceFilter}
-            onChange={(e) => setInternetServiceFilter(e.target.value)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option>All</option>
-            <option>DSL</option>
-            <option>Fiber optic</option>
-            <option>No</option>
-          </select>
-        </div>
-      </div>
-      {/* --- Data Display --- */}
-      <div className="p-4 bg-white rounded-lg shadow mb-8">
-        <h2 className="text-xl font-semibold">
-          Showing {filteredData.length} of {allData.length} customers
+      {/* --- 1. DYNAMIC PARAMETER EXPLORER --- */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-2xl font-semibold mb-4">
+          Categorical Feature Explorer
         </h2>
-      </div>
-      {/* --- Charts Area --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2">
-            Churn Rate by Contract Type
-          </h3>
-          <ChurnByContractChart data={filteredData} />
+        <p className="text-gray-600 mb-4">
+          Select a parameter to see the distribution of Churn (Yes) vs. Stayed
+          (No).
+        </p>
+
+        <div className="mb-4 max-w-xs">
+          <label
+            htmlFor="param-select"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Select a Parameter
+          </label>
+          <select
+            id="param-select"
+            value={selectedParameter}
+            onChange={(e) => setSelectedParameter(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          >
+            {categoricalParameters.map((param) => (
+              <option key={param.value} value={param.value}>
+                {param.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2">
-            Average Tenure vs. Churn
-          </h3>
-          <TenureChurnChart data={filteredData} />
+        <div className="h-96">
+          <DynamicParameterChart
+            data={allData}
+            parameter={selectedParameter as keyof Customer}
+          />
         </div>
       </div>
-    </div>
+
+      {/* --- 2. NUMERICAL & DATA ANALYSIS (STATIC GRID) --- */}
+      <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+        Numerical & Correlation Analysis
+      </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <StaticChartCard
+          title="Tenure vs. Churn"
+          description="Customers who churn (1) have a significantly lower tenure (lifespan)."
+          imgSrc="tenure_vs_churn.png"
+        />
+
+        <StaticChartCard
+          title="Monthly Charges vs. Churn"
+          description="Customers who churn (1) tend to have higher monthly charges."
+          imgSrc="monthlycharges_vs_churn.png"
+        />
+
+        <StaticChartCard
+          title="Total Charges vs. Churn"
+          description="Customers who churn (1) have a lower overall total spend (as they are newer)."
+          imgSrc="totalcharges_vs_churn.png"
+        />
+
+        <StaticChartCard
+          title="Correlation Heatmap"
+          description="Shows how numerical features relate to each other."
+          imgSrc="correlation_heatmap.png"
+        />
+      </div>
+    </main>
   );
 }

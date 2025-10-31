@@ -24,7 +24,7 @@ export default function ChurnByContractChart({ data }: { data: Customer[] }) {
         acc[contract] = { total: 0, churn: 0 };
       }
       acc[contract].total += 1;
-      if (customer.Churn === 1) {
+      if (customer.Churn === "Yes") {
         acc[contract].churn += 1;
       }
       return acc;

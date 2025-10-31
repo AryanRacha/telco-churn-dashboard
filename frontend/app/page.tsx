@@ -1,16 +1,34 @@
-"use client"; // Needs to be a client component to fetch data
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getExplorerData } from "@/lib/api"; // Reuse the explorer API call
+import { getExplorerData } from "@/lib/api";
 import { Customer } from "@/lib/types";
-import KpiCard from "@/components/KpiCard"; // Import the new component
+
+// --- Reusable KPI Card Component ---
+interface KpiCardProps {
+  title: string;
+  value: string | number;
+  icon?: string;
+}
+function KpiCard({ title, value, icon }: KpiCardProps) {
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+      {icon && <div className="text-4xl text-blue-500">{icon}</div>}
+      <div>
+        <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+        <dd className="mt-1 text-3xl font-semibold text-gray-900">{value}</dd>
+      </div>
+    </div>
+  );
+}
+// --- End of Component ---
 
 export default function HomePage() {
   const [data, setData] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data on component mount
+  // Fetch data on component mount to calculate KPIs
   useEffect(() => {
     async function fetchData() {
       try {
@@ -26,7 +44,7 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Calculate KPIs using useMemo for efficiency
+  // Calculate KPIs
   const kpis = useMemo(() => {
     if (!data || data.length === 0) {
       return {
@@ -50,29 +68,28 @@ export default function HomePage() {
 
     return {
       totalCustomers,
-      churnRate: churnRate.toFixed(1) + "%", // Format as percentage string
-      avgTenure: avgTenure.toFixed(0), // Format as whole number
-      avgMonthlyCharge: "$" + avgMonthlyCharge.toFixed(2), // Format as currency string
+      churnRate: churnRate.toFixed(1) + "%",
+      avgTenure: avgTenure.toFixed(0),
+      avgMonthlyCharge: "$" + avgMonthlyCharge.toFixed(2),
     };
   }, [data]);
 
   return (
-    <main className="p-8">
-      {/* Hero Section */}
+    <main className="p-10">
+      {/* 1. Header */}
       <div className="mb-10">
         <h1 className="text-4xl font-bold mb-2">
           🏠 Proactive Customer Churn Dashboard
         </h1>
         <p className="text-lg text-gray-600">
-          Using Random Forest and FastAPI to find *why* customers leave and
-          *how* to keep them.
+          An interactive dashboard for DWM project.
         </p>
       </div>
 
-      {/* KPI Section */}
-      <div className="mb-10">
+      {/* 2. KPI Section */}
+      <div className="mb-12">
         <h2 className="text-2xl font-semibold mb-4 text-gray-700">
-          Overall Metrics
+          Project KPIs
         </h2>
         {isLoading && <p>Loading KPIs...</p>}
         {error && <p className="text-red-600">Error loading KPIs: {error}</p>}
@@ -98,27 +115,38 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Project Overview Sections (Optional but Recommended) */}
+      {/* 3. Project Explanation */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold mb-3">The Business Problem</h3>
-          <p className="text-gray-700">
-            Customer churn is a major challenge for telecom companies... (add
-            your description here). This dashboard provides predictive insights
-            and allows for interactive scenario planning to proactively address
-            churn risks.
+          <p className="text-gray-700 leading-relaxed">
+            Customer churn, or the rate at which customers leave, is a critical
+            and expensive problem for businesses. This project builds a
+            full-stack tool that moves beyond simple, reactive analysis to
+            provide a proactive solution for understanding and preventing churn.
           </p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-3">Technology Stack</h3>
-          <ul className="list-disc list-inside text-gray-700 space-y-1">
-            <li>Frontend: Next.js, React, TailwindCSS, Recharts</li>
-            <li>Backend: FastAPI, Python</li>
-            <li>DWM: Scikit-learn, Pandas, Joblib</li>
-            <li>
-              Models: Random Forest (Classifier), Linear Regression, K-Means
-            </li>
-          </ul>
+
+        {/* --- THIS IS THE FIX --- */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold mb-3">Our Solution</h3>
+          {/* Changed <p> to <div> */}
+          <div className="text-gray-700 leading-relaxed">
+            This dashboard uses data analysis and machine learning to answer
+            three key questions:
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>
+                <b>What's happening?</b> (See the Dataset Explorer)
+              </li>
+              <li>
+                <b>Why is it happening?</b> (See the Model Insights)
+              </li>
+              <li>
+                <b>What can we do?</b> (See the Live Playground)
+              </li>
+            </ul>
+          </div>{" "}
+          {/* Changed </p> to </div> */}
         </div>
       </div>
     </main>
