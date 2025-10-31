@@ -52,7 +52,6 @@ def save_eda_plots(df_cleaned, visuals_dir):
     
     churn_palette = {0: "#3b82f6", 1: "#f97316"} # Blue (Stayed), Orange (Churned)
 
-    # --- [FIX 2: Updated Legend Logic] ---
     # Plot 1: Tenure vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='tenure', hue='Churn', 
@@ -67,7 +66,6 @@ def save_eda_plots(df_cleaned, visuals_dir):
     plt.savefig(os.path.join(visuals_dir, 'tenure_vs_churn.svg'), bbox_inches='tight')
     print("Saved tenure_vs_churn.svg")
 
-    # --- [FIX 2: Updated Legend Logic] ---
     # Plot 2: MonthlyCharges vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='MonthlyCharges', hue='Churn', 
@@ -143,6 +141,13 @@ def train_classifier_and_preprocessor(df_cleaned):
     y_pred_c = rf_model.predict(X_test_c_processed)
     print("Random Forest Classifier Report:")
     print(classification_report(y_test_c, y_pred_c))
+    
+    # Calculate the accuracy score
+    acc = accuracy_score(y_test_c, y_pred_c)
+    
+    # Print it out, formatted as a percentage
+    print("\n--- Overall Model Accuracy ---")
+    print(f"Accuracy: {acc * 100:.2f}%\n")
 
     # Save Feature Importance Plot
     try:

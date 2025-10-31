@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Customer } from "@/lib/types";
 import { getExplorerData } from "@/lib/api";
 import Image from "next/image";
-import DynamicParameterChart from "@/components/charts/DynamicParameterChart";
+import DynamicParameterChart from "@/components/DynamicParameterChart";
 
 const IMAGE_API_URL = "http://127.0.0.1:8000/api/images";
 

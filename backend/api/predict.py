@@ -32,7 +32,7 @@ async def predict_churn(input_data: CustomerInput):
         # 3. Make Prediction
         prediction_proba = classifier.predict_proba(processed_df)
         churn_probability = prediction_proba[0][1] # Probability of class 1 (Churn)
-        churn_prediction = 1 if churn_probability > 0.5 else 0
+        churn_prediction = 1 if churn_probability > 0.35 else 0
 
         # 4. Get Feature Importances (The "Why")
         feature_names = preprocessor.get_feature_names_out()

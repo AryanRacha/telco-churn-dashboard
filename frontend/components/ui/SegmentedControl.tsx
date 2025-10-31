@@ -19,13 +19,13 @@ export default function SegmentedControl({
       <RadioGroup.Label className="block text-sm font-medium text-gray-700">
         {label}
       </RadioGroup.Label>
-      <div className="mt-1 grid grid-cols-3 gap-2 rounded-md bg-gray-100 p-1">
+      <div className="mt-1 flex items-center justify-between gap-2 rounded-md bg-gray-100 p-1">
         {options.map((option) => (
           <RadioGroup.Option
             key={option.name}
             value={option.value}
             className={({ active, checked }) =>
-              `cursor-pointer rounded-md p-2 text-center text-sm font-medium transition-colors
+              `cursor-pointer rounded-md p-2 text-center text-sm font-medium transition-colors w-full
                ${
                  checked
                    ? "bg-blue-600 text-white shadow"
