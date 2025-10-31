@@ -1,16 +1,16 @@
-import WhatIfSimulator from "@/components/WhatIfSimulator";
+import LivePlayground from "@/components/LivePlayground"; // We will create this
 
 export default function PlaygroundPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">🎮 What-If Playground</h1>
+    <main className="p-10">
+      <h1 className="text-4xl font-bold mb-4">🎮 Live Playground</h1>
       <p className="text-lg text-gray-600 mb-8">
-        Interactively explore how changing key factors impacts a customer's
-        churn risk. See the model's predictions change in real-time!
+        A fully interactive simulator. Tweak any of the 19 customer parameters
+        and see the churn risk update in real-time.
       </p>
 
-      {/* The main simulator component handles the layout */}
-      <WhatIfSimulator />
-    </div>
+      {/* This one component will handle everything */}
+      <LivePlayground />
+    </main>
   );
 }
