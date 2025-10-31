@@ -28,7 +28,7 @@ VISUALS_DIR = os.path.join(BACKEND_DIR, 'reports/visuals/')
 
 def load_and_clean_data(data_path):
     """ Loads and cleans the data. """
-    print("--- [Helper] Loading and Cleaning Data ---")
+    print("\n--- [Helper] Loading and Cleaning Data ---\n")
     try:
         df = pd.read_csv(data_path)
     except FileNotFoundError:
@@ -40,82 +40,79 @@ def load_and_clean_data(data_path):
     df['Churn'] = df['Churn'].map({'Yes': 1, 'No': 0})
     df_cleaned = df.drop('customerID', axis=1)
     print(f"Data cleaned. {df_cleaned.shape[0]} rows remaining.")
+    print("\n" + "="*80)
     return df_cleaned
 
 def save_eda_plots(df_cleaned, visuals_dir):
     """
     Saves all necessary EDA plots for the frontend dashboard.
-    This version uses HISTOGRAMS instead of box plots for numerical data.
     """
-    print("--- [Helper] Saving All EDA Plots ---")
+    print("\n--- [Helper] Saving All EDA Plots ---\n")
     sns.set_style('whitegrid')
     
-    # Define our churn colors
-    # Use friendly, distinct colors
-    churn_palette = {0: "#16a34a", 1: "#dc2626"} # 0=Green (Stayed), 1=Red (Churned)
-    churn_labels = {0: 'Stayed', 1: 'Churned'}
+    churn_palette = {0: "#3b82f6", 1: "#f97316"} # Blue (Stayed), Orange (Churned)
 
-    # Plot 1: Contract vs. Churn (Bar Chart - This is good as-is)
-    plt.figure(figsize=(10, 6))
-    churn_rate = df_cleaned.groupby('Contract')['Churn'].mean().reset_index()
-    sns.barplot(x='Contract', y='Churn', data=churn_rate, palette='viridis')
-    plt.title('Churn Rate by Contract Type', fontsize=16)
-    plt.savefig(os.path.join(visuals_dir, 'contract_vs_churn.png'), bbox_inches='tight')
-    print("Saved contract_vs_churn.png")
-
-    # --- [NEW HISTOGRAM PLOT] ---
-    # Plot 2: Tenure vs. Churn
+    # --- [FIX 2: Updated Legend Logic] ---
+    # Plot 1: Tenure vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='tenure', hue='Churn', 
                  multiple='layer', kde=True, palette=churn_palette, 
                  hue_order=[0, 1])
     plt.title('Distribution of Tenure by Churn Status', fontsize=16)
-    # Manually set legend labels to be clear
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
-    plt.savefig(os.path.join(visuals_dir, 'tenure_vs_churn.png'), bbox_inches='tight')
-    print("Saved tenure_vs_churn.png")
+    legend = plt.gca().get_legend()
+    legend.set_title('Churn Status')
+    if len(legend.texts) >= 2:
+        legend.texts[0].set_text('Stayed')
+        legend.texts[1].set_text('Churned')
+    plt.savefig(os.path.join(visuals_dir, 'tenure_vs_churn.svg'), bbox_inches='tight')
+    print("Saved tenure_vs_churn.svg")
 
-    # --- [NEW HISTOGRAM PLOT] ---
-    # Plot 3: MonthlyCharges vs. Churn
+    # --- [FIX 2: Updated Legend Logic] ---
+    # Plot 2: MonthlyCharges vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='MonthlyCharges', hue='Churn', 
                  multiple='layer', kde=True, palette=churn_palette, 
                  hue_order=[0, 1])
     plt.title('Distribution of Monthly Charges by Churn Status', fontsize=16)
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
-    plt.savefig(os.path.join(visuals_dir, 'monthlycharges_vs_churn.png'), bbox_inches='tight')
-    print("Saved monthlycharges_vs_churn.png")
+    legend = plt.gca().get_legend()
+    legend.set_title('Churn Status')
+    if len(legend.texts) >= 2:
+        legend.texts[0].set_text('Stayed')
+        legend.texts[1].set_text('Churned')
+    plt.savefig(os.path.join(visuals_dir, 'monthlycharges_vs_churn.svg'), bbox_inches='tight')
+    print("Saved monthlycharges_vs_churn.svg")
 
-    # --- [NEW HISTOGRAM PLOT] ---
-    # Plot 4: TotalCharges vs. Churn
+    # --- [FIX 2: Updated Legend Logic] ---
+    # Plot 3: TotalCharges vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='TotalCharges', hue='Churn', 
                  multiple='layer', kde=True, palette=churn_palette, 
                  hue_order=[0, 1])
     plt.title('Distribution of Total Charges by Churn Status', fontsize=16)
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
-    plt.savefig(os.path.join(visuals_dir, 'totalcharges_vs_churn.png'), bbox_inches='tight')
-    print("Saved totalcharges_vs_churn.png")
+    legend = plt.gca().get_legend()
+    legend.set_title('Churn Status')
+    if len(legend.texts) >= 2:
+        legend.texts[0].set_text('Stayed')
+        legend.texts[1].set_text('Churned')
+    plt.savefig(os.path.join(visuals_dir, 'totalcharges_vs_churn.svg'), bbox_inches='tight')
+    print("Saved totalcharges_vs_churn.svg")
     
-    # Plot 5: Correlation Heatmap (This is good as-is)
+    # Plot 4: Correlation Heatmap
     plt.figure(figsize=(12, 10))
-    # Select only numeric columns for correlation, including 'Churn'
     numerical_df = df_cleaned.select_dtypes(include=np.number)
     corr = numerical_df.corr()
     sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', linewidths=0.5)
     plt.title('Correlation Heatmap of Numerical Features', fontsize=16)
-    plt.savefig(os.path.join(visuals_dir, 'correlation_heatmap.png'), bbox_inches='tight')
-    print("Saved correlation_heatmap.png")
+    plt.savefig(os.path.join(visuals_dir, 'correlation_heatmap.svg'), bbox_inches='tight')
+    print("Saved correlation_heatmap.svg")
     
     plt.close('all') 
-    print("All EDA plots saved (using histograms).")
+    print("All EDA plots saved.")
+    print("\n" + "="*80)
 
-def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
+def train_classifier_and_preprocessor(df_cleaned):
     """ Trains the main preprocessor and the Random Forest classifier. """
-    print("--- [Helper] Training Classifier & Preprocessor ---")
+    print("\n--- [Helper] Training Classifier & Preprocessor ---\n")
     
     target_classifier = 'Churn'
     target_regressor = 'MonthlyCharges'
@@ -148,38 +145,42 @@ def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
     print(classification_report(y_test_c, y_pred_c))
 
     # Save Feature Importance Plot
-    print("Saving Feature Importance plot...")
     try:
         feature_names = preprocessor.get_feature_names_out()
         importances = rf_model.feature_importances_
         forest_importances = pd.Series(importances, index=feature_names).sort_values(ascending=False)
+        
         plt.figure(figsize=(10, 8))
-        sns.barplot(x=forest_importances.head(10), y=forest_importances.head(10).index, palette='viridis')
+        sns.barplot(x=forest_importances.head(10), y=forest_importances.head(10).index, palette='viridis', hue=forest_importances.head(10).index, legend=False)
         plt.title('Top 10 Feature Importances (Random Forest)')
-        plt.savefig(os.path.join(VISUALS_DIR, 'feature_importance.png'), bbox_inches='tight')
-        print(f"Saved: {VISUALS_DIR}/feature_importance.png")
+        plt.savefig(os.path.join(VISUALS_DIR, 'feature_importance.svg'), bbox_inches='tight')
+        print(f"Saved feature_importance.svg")
     except Exception as e:
         print(f"Error saving feature importance plot: {e}")
     plt.close()
 
     # Save Confusion Matrix Plot
-    print("Saving Confusion Matrix plot...")
     try:
         cm = confusion_matrix(y_test_c, y_pred_c, labels=rf_model.classes_)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['No Churn', 'Churn'])
+        
+        # --- [FIX 1: Updated Grid Logic] ---
         disp.plot(cmap='Blues')
+        disp.ax_.grid(False)
+        
         plt.title('Classifier Confusion Matrix')
-        plt.savefig(os.path.join(VISUALS_DIR, 'confusion_matrix.png'), bbox_inches='tight')
-        print(f"Saved: {VISUALS_DIR}/confusion_matrix.png")
+        plt.savefig(os.path.join(VISUALS_DIR, 'confusion_matrix.svg'), bbox_inches='tight')
+        print(f"Saved confusion_matrix.svg")
     except Exception as e:
         print(f"Error saving confusion matrix plot: {e}")
     plt.close()
+    print("\n" + "="*80)
     
     return preprocessor, rf_model
 
 def train_regressor(df_cleaned, preprocessor, visuals_dir):
     """ Trains the Linear Regression model. """
-    print("--- [Helper] Training Regressor ---")
+    print("\n--- [Helper] Training Regressor ---\n")
     
     target_classifier = 'Churn'
     target_regressor = 'MonthlyCharges'
@@ -193,7 +194,6 @@ def train_regressor(df_cleaned, preprocessor, visuals_dir):
     print("Linear Regression model trained.")
 
     # Save Regression Plot
-    print("Saving Regression (Actual vs. Predicted) plot...")
     try:
         y_pred_r = lr_model.predict(X_r_processed)
         plt.figure(figsize=(10, 6))
@@ -202,17 +202,18 @@ def train_regressor(df_cleaned, preprocessor, visuals_dir):
         plt.xlabel('Actual Monthly Charges')
         plt.ylabel('Predicted Monthly Charges')
         plt.title('Regression: Actual vs. Predicted')
-        plt.savefig(os.path.join(VISUALS_DIR, 'regression_actual_vs_pred.png'), bbox_inches='tight')
-        print(f"Saved: {VISUALS_DIR}/regression_actual_vs_pred.png")
+        plt.savefig(os.path.join(VISUALS_DIR, 'regression_actual_vs_pred.svg'), bbox_inches='tight')
+        print("Saved regression_actual_vs_pred.svg")
     except Exception as e:
         print(f"Error saving regression plot: {e}")
     plt.close()
+    print("\n" + "="*80)
     
     return lr_model
 
 def train_clusterer(df_cleaned, visuals_dir):
     """ Trains the K-Means clustering pipeline. """
-    print("--- [Helper] Training Clusterer ---")
+    print("\n--- [Helper] Training Clusterer ---\n")
     cluster_features = df_cleaned[['tenure', 'MonthlyCharges']]
     
     kmeans_pipeline = Pipeline([
@@ -224,7 +225,6 @@ def train_clusterer(df_cleaned, visuals_dir):
     print("K-Means pipeline (Scaler + Model) trained.")
 
     # Save Clustering Plot
-    print("Saving K-Means Clusters plot...")
     try:
         cluster_labels = kmeans_pipeline.predict(cluster_features)
         plt.figure(figsize=(10, 6))
@@ -233,22 +233,23 @@ def train_clusterer(df_cleaned, visuals_dir):
         plt.xlabel('Tenure (Months)')
         plt.ylabel('Monthly Charges')
         plt.legend(title='Cluster')
-        plt.savefig(os.path.join(VISUALS_DIR, 'kmeans_clusters.png'), bbox_inches='tight')
-        print(f"Saved: {VISUALS_DIR}/kmeans_clusters.png")
+        plt.savefig(os.path.join(VISUALS_DIR, 'kmeans_clusters.svg'), bbox_inches='tight')
+        print(f"Saved kmeans_clusters.svg")
     except Exception as e:
         print(f"Error saving clustering plot: {e}")
     plt.close('all')
+    print("\n" + "="*80)
     
     return kmeans_pipeline
 
 def save_all_models(models_dict, model_dir):
     """ Saves all fitted models and the preprocessor. """
-    print("--- [Helper] Saving All Models ---")
+    print("\n--- [Helper] Saving All Models ---\n")
     for name, model in models_dict.items():
         filename = f"{name}.joblib"
         path = os.path.join(model_dir, filename)
         joblib.dump(model, path)
-        print(f"Saved: {path}")
+        print(f"Saved {name}.joblib")
 
 # ==============================================================================
 # --- 3. Main Pipeline (The "Conductor") ---
@@ -272,10 +273,10 @@ def main_pipeline():
         return
     
     # 2. Save EDA Plots
-    save_eda_plots(df_cleaned, VISUALS_DIR) # <--- We run this new helper
+    save_eda_plots(df_cleaned, VISUALS_DIR) 
     
     # 3. Train Classifier & Preprocessor
-    preprocessor, rf_model = train_classifier_and_preprocessor(df_cleaned, VISUALS_DIR)
+    preprocessor, rf_model = train_classifier_and_preprocessor(df_cleaned)
     
     # 4. Train Regressor
     lr_model = train_regressor(df_cleaned, preprocessor, VISUALS_DIR)

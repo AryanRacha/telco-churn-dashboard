@@ -12,7 +12,7 @@ const IMAGE_API_URL = "http://127.0.0.1:8000/api/images";
 // --- 2. Dynamically Import Recharts Components ---
 // This tells Next.js to only render these on the client, fixing the "empty chart" bug.
 const ClusterScatterPlot = dynamic(
-  () => import("@/components/ClusterScatterPlot"),
+  () => import("@/components/charts/ClusterScatterPlot"),
   {
     ssr: false, // No Server-Side Rendering
     loading: () => (
@@ -24,7 +24,7 @@ const ClusterScatterPlot = dynamic(
 );
 
 const RegressionScatterPlot = dynamic(
-  () => import("@/components/RegressionScatterPlot"),
+  () => import("@/components/charts/RegressionScatterPlot"),
   {
     ssr: false,
     loading: () => (
@@ -35,7 +35,7 @@ const RegressionScatterPlot = dynamic(
   }
 );
 
-// --- Reusable component for your static .png charts ---
+// --- Reusable component for your static .svg charts ---
 const StaticChartCard = ({
   title,
   description,
@@ -137,14 +137,14 @@ export default function InsightsPage() {
         <StaticChartCard
           title="Classifier: Feature Importance"
           description="The top 10 features our Random Forest model uses to predict churn."
-          imgSrc="feature_importance.png"
+          imgSrc="feature_importance.svg"
         />
 
         {/* --- 4. Confusion Matrix (Static) --- */}
         <StaticChartCard
           title="Classifier: Confusion Matrix"
           description="The official 'report card' for our classifier on the test data."
-          imgSrc="confusion_matrix.png"
+          imgSrc="confusion_matrix.svg"
         />
       </div>
     </main>

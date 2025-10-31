@@ -19,7 +19,7 @@ function Sidebar() {
     { name: "Dataset Explorer", href: "/explorer", icon: "📊" },
     { name: "Model Insights", href: "/insights", icon: "💡" },
     { name: "Live Playground", href: "/playground", icon: "🎮" },
-    { name: "Conclusion", href: "/conclusion", icon: "🚀" },
+    { name: "Summary", href: "/summary", icon: "🚀" },
   ];
 
   return (

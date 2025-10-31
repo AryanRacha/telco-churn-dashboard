@@ -127,10 +127,8 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* --- THIS IS THE FIX --- */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold mb-3">Our Solution</h3>
-          {/* Changed <p> to <div> */}
           <div className="text-gray-700 leading-relaxed">
             This dashboard uses data analysis and machine learning to answer
             three key questions:
@@ -145,8 +143,7 @@ export default function HomePage() {
                 <b>What can we do?</b> (See the Live Playground)
               </li>
             </ul>
-          </div>{" "}
-          {/* Changed </p> to </div> */}
+          </div>
         </div>
       </div>
     </main>

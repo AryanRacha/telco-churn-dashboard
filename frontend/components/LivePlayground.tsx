@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { CustomerInput, RiskProfileResponse } from "@/lib/types";
 import { getRiskProfile } from "@/lib/api";
-import RiskProfileCard from "./RiskProfileCard";
+import RiskProfileCard from "./ui/RiskProfileCard";
 import debounce from "lodash.debounce";
 
 // --- Import our new components ---
-import Toggle from "./Toggle";
-import SegmentedControl from "./SegmentedControl";
+import Toggle from "./ui/Toggle";
+import SegmentedControl from "./ui/SegmentedControl";
 
 // --- Define options for segmented controls ---
 const genderOptions = [

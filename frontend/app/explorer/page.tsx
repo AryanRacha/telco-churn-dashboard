@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Customer } from "@/lib/types";
 import { getExplorerData } from "@/lib/api";
 import Image from "next/image";
-import DynamicParameterChart from "@/components/DynamicParameterChart";
+import DynamicParameterChart from "@/components/charts/DynamicParameterChart";
 
 const IMAGE_API_URL = "http://127.0.0.1:8000/api/images";
 
@@ -148,25 +148,25 @@ export default function ExplorerPage() {
         <StaticChartCard
           title="Tenure vs. Churn"
           description="Customers who churn (1) have a significantly lower tenure (lifespan)."
-          imgSrc="tenure_vs_churn.png"
+          imgSrc="tenure_vs_churn.svg"
         />
 
         <StaticChartCard
           title="Monthly Charges vs. Churn"
           description="Customers who churn (1) tend to have higher monthly charges."
-          imgSrc="monthlycharges_vs_churn.png"
+          imgSrc="monthlycharges_vs_churn.svg"
         />
 
         <StaticChartCard
           title="Total Charges vs. Churn"
           description="Customers who churn (1) have a lower overall total spend (as they are newer)."
-          imgSrc="totalcharges_vs_churn.png"
+          imgSrc="totalcharges_vs_churn.svg"
         />
 
         <StaticChartCard
           title="Correlation Heatmap"
           description="Shows how numerical features relate to each other."
-          imgSrc="correlation_heatmap.png"
+          imgSrc="correlation_heatmap.svg"
         />
       </div>
     </main>
