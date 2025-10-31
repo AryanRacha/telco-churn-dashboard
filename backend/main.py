@@ -4,17 +4,16 @@ import uvicorn
 from contextlib import asynccontextmanager
 
 # Import your API routes and services
-from api import predict, figures, explorer 
+from api import predict, figures, explorer
+from api import images
 from services import model_service 
 
-# Lifespan context manager to handle startup and shutdown events.
+# (The 'lifespan' function is unchanged)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("--- 🚀 Application Startup ---")
     model_service.load_all_models()
-    
     yield
-    
     print("--- 🔌 Application Shutdown ---")
 
 app = FastAPI(
@@ -24,7 +23,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# --- Add CORS Middleware ---
+# (The 'CORS' middleware section is unchanged)
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -37,12 +36,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- (The @app.on_event("startup") decorator is GONE) ---
-
 # --- Include API Routes ---
 app.include_router(predict.router, prefix="/api/predict", tags=["Predictions"])
 app.include_router(figures.router, prefix="/api/figures", tags=["Model Figures"])
 app.include_router(explorer.router, prefix="/api/explorer", tags=["Explorer"])
+app.include_router(images.router, prefix="/api/images", tags=["Static Images"]) # <--- 2. ADD THIS LINE
 
 # --- Root Health Check ---
 @app.get("/api", tags=["Health Check"])

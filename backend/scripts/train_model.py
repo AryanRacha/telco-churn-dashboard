@@ -11,12 +11,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 # ==============================================================================
 # --- 1. Path Definitions ---
 # ==============================================================================
-# Define robust paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
 DATA_PATH = os.path.join(BACKEND_DIR, 'data/telco_customer_churn.csv')
@@ -28,10 +27,7 @@ VISUALS_DIR = os.path.join(BACKEND_DIR, 'reports/visuals/')
 # ==============================================================================
 
 def load_and_clean_data(data_path):
-    """
-    Loads the data and performs all cleaning steps.
-    Returns a cleaned DataFrame.
-    """
+    """ Loads and cleans the data. """
     print("--- [Helper] Loading and Cleaning Data ---")
     try:
         df = pd.read_csv(data_path)
@@ -46,22 +42,87 @@ def load_and_clean_data(data_path):
     print(f"Data cleaned. {df_cleaned.shape[0]} rows remaining.")
     return df_cleaned
 
+def save_eda_plots(df_cleaned, visuals_dir):
+    """
+    Saves all necessary EDA plots for the frontend dashboard.
+    This version uses HISTOGRAMS instead of box plots for numerical data.
+    """
+    print("--- [Helper] Saving All EDA Plots ---")
+    sns.set_style('whitegrid')
+    
+    # Define our churn colors
+    # Use friendly, distinct colors
+    churn_palette = {0: "#16a34a", 1: "#dc2626"} # 0=Green (Stayed), 1=Red (Churned)
+    churn_labels = {0: 'Stayed', 1: 'Churned'}
+
+    # Plot 1: Contract vs. Churn (Bar Chart - This is good as-is)
+    plt.figure(figsize=(10, 6))
+    churn_rate = df_cleaned.groupby('Contract')['Churn'].mean().reset_index()
+    sns.barplot(x='Contract', y='Churn', data=churn_rate, palette='viridis')
+    plt.title('Churn Rate by Contract Type', fontsize=16)
+    plt.savefig(os.path.join(visuals_dir, 'contract_vs_churn.png'), bbox_inches='tight')
+    print("Saved contract_vs_churn.png")
+
+    # --- [NEW HISTOGRAM PLOT] ---
+    # Plot 2: Tenure vs. Churn
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data=df_cleaned, x='tenure', hue='Churn', 
+                 multiple='layer', kde=True, palette=churn_palette, 
+                 hue_order=[0, 1])
+    plt.title('Distribution of Tenure by Churn Status', fontsize=16)
+    # Manually set legend labels to be clear
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
+    plt.savefig(os.path.join(visuals_dir, 'tenure_vs_churn.png'), bbox_inches='tight')
+    print("Saved tenure_vs_churn.png")
+
+    # --- [NEW HISTOGRAM PLOT] ---
+    # Plot 3: MonthlyCharges vs. Churn
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data=df_cleaned, x='MonthlyCharges', hue='Churn', 
+                 multiple='layer', kde=True, palette=churn_palette, 
+                 hue_order=[0, 1])
+    plt.title('Distribution of Monthly Charges by Churn Status', fontsize=16)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
+    plt.savefig(os.path.join(visuals_dir, 'monthlycharges_vs_churn.png'), bbox_inches='tight')
+    print("Saved monthlycharges_vs_churn.png")
+
+    # --- [NEW HISTOGRAM PLOT] ---
+    # Plot 4: TotalCharges vs. Churn
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data=df_cleaned, x='TotalCharges', hue='Churn', 
+                 multiple='layer', kde=True, palette=churn_palette, 
+                 hue_order=[0, 1])
+    plt.title('Distribution of Total Charges by Churn Status', fontsize=16)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles=handles, labels=[churn_labels[int(l)] for l in labels])
+    plt.savefig(os.path.join(visuals_dir, 'totalcharges_vs_churn.png'), bbox_inches='tight')
+    print("Saved totalcharges_vs_churn.png")
+    
+    # Plot 5: Correlation Heatmap (This is good as-is)
+    plt.figure(figsize=(12, 10))
+    # Select only numeric columns for correlation, including 'Churn'
+    numerical_df = df_cleaned.select_dtypes(include=np.number)
+    corr = numerical_df.corr()
+    sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', linewidths=0.5)
+    plt.title('Correlation Heatmap of Numerical Features', fontsize=16)
+    plt.savefig(os.path.join(visuals_dir, 'correlation_heatmap.png'), bbox_inches='tight')
+    print("Saved correlation_heatmap.png")
+    
+    plt.close('all') 
+    print("All EDA plots saved (using histograms).")
+
 def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
-    """
-    Trains the main preprocessor and the Random Forest classifier.
-    Saves the associated plots.
-    Returns the fitted preprocessor and classifier model.
-    """
+    """ Trains the main preprocessor and the Random Forest classifier. """
     print("--- [Helper] Training Classifier & Preprocessor ---")
     
-    # --- Define Features ---
     target_classifier = 'Churn'
     target_regressor = 'MonthlyCharges'
     features_df = df_cleaned.drop([target_classifier, target_regressor], axis=1, errors='ignore')
     numerical_features = features_df.select_dtypes(include=np.number).columns.tolist()
     categorical_features = features_df.select_dtypes(include='object').columns.tolist()
 
-    # --- Build Preprocessor ---
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', StandardScaler(), numerical_features),
@@ -70,28 +131,24 @@ def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
         remainder='drop'
     )
     
-    # --- Train Classifier ---
     X_c = features_df
     y_c = df_cleaned[target_classifier]
     X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(X_c, y_c, test_size=0.2, random_state=42, stratify=y_c)
     
-    # Fit preprocessor
     preprocessor.fit(X_train_c)
     
-    # Transform data
     X_train_c_processed = preprocessor.transform(X_train_c)
     X_test_c_processed = preprocessor.transform(X_test_c)
     
-    # Train model
     rf_model = RandomForestClassifier(random_state=42, n_estimators=100)
     rf_model.fit(X_train_c_processed, y_train_c)
     
-    # --- Save Plots ---
     y_pred_c = rf_model.predict(X_test_c_processed)
     print("Random Forest Classifier Report:")
     print(classification_report(y_test_c, y_pred_c))
 
     # Save Feature Importance Plot
+    print("Saving Feature Importance plot...")
     try:
         feature_names = preprocessor.get_feature_names_out()
         importances = rf_model.feature_importances_
@@ -106,6 +163,7 @@ def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
     plt.close()
 
     # Save Confusion Matrix Plot
+    print("Saving Confusion Matrix plot...")
     try:
         cm = confusion_matrix(y_test_c, y_pred_c, labels=rf_model.classes_)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['No Churn', 'Churn'])
@@ -116,16 +174,11 @@ def train_classifier_and_preprocessor(df_cleaned, visuals_dir):
     except Exception as e:
         print(f"Error saving confusion matrix plot: {e}")
     plt.close()
-
-    # Return the *fitted* preprocessor and model
+    
     return preprocessor, rf_model
 
 def train_regressor(df_cleaned, preprocessor, visuals_dir):
-    """
-    Trains the Linear Regression model using the *already fitted* preprocessor.
-    Saves the associated plots.
-    Returns the fitted regression model.
-    """
+    """ Trains the Linear Regression model. """
     print("--- [Helper] Training Regressor ---")
     
     target_classifier = 'Churn'
@@ -133,15 +186,14 @@ def train_regressor(df_cleaned, preprocessor, visuals_dir):
     features_df = df_cleaned.drop([target_classifier, target_regressor], axis=1, errors='ignore')
     y_r = df_cleaned[target_regressor]
     
-    # Use the fitted preprocessor
     X_r_processed = preprocessor.transform(features_df)
     
-    # Train model
     lr_model = LinearRegression()
     lr_model.fit(X_r_processed, y_r)
     print("Linear Regression model trained.")
 
     # Save Regression Plot
+    print("Saving Regression (Actual vs. Predicted) plot...")
     try:
         y_pred_r = lr_model.predict(X_r_processed)
         plt.figure(figsize=(10, 6))
@@ -159,15 +211,10 @@ def train_regressor(df_cleaned, preprocessor, visuals_dir):
     return lr_model
 
 def train_clusterer(df_cleaned, visuals_dir):
-    """
-    Trains the K-Means clustering pipeline.
-    Saves the associated plots.
-    Returns the fitted clustering pipeline.
-    """
+    """ Trains the K-Means clustering pipeline. """
     print("--- [Helper] Training Clusterer ---")
     cluster_features = df_cleaned[['tenure', 'MonthlyCharges']]
     
-    # Build a self-contained pipeline
     kmeans_pipeline = Pipeline([
         ('scaler', StandardScaler()),
         ('kmeans', KMeans(n_clusters=3, random_state=42, n_init=10))
@@ -177,6 +224,7 @@ def train_clusterer(df_cleaned, visuals_dir):
     print("K-Means pipeline (Scaler + Model) trained.")
 
     # Save Clustering Plot
+    print("Saving K-Means Clusters plot...")
     try:
         cluster_labels = kmeans_pipeline.predict(cluster_features)
         plt.figure(figsize=(10, 6))
@@ -189,14 +237,12 @@ def train_clusterer(df_cleaned, visuals_dir):
         print(f"Saved: {VISUALS_DIR}/kmeans_clusters.png")
     except Exception as e:
         print(f"Error saving clustering plot: {e}")
-    plt.close('all') # Close all figs
+    plt.close('all')
     
     return kmeans_pipeline
 
 def save_all_models(models_dict, model_dir):
-    """
-    Saves all fitted models and the preprocessor to the models directory.
-    """
+    """ Saves all fitted models and the preprocessor. """
     print("--- [Helper] Saving All Models ---")
     for name, model in models_dict.items():
         filename = f"{name}.joblib"
@@ -211,32 +257,33 @@ def save_all_models(models_dict, model_dir):
 def main_pipeline():
     """
     This is the main function that runs the entire pipeline in order.
-    It's clean, simple, and easy to explain.
     """
     
     print("\n" + "="*80)
     print("--- [START] DWM Training Pipeline ---")
     print("="*80)
     
-    # Make sure dirs exist
     os.makedirs(MODEL_DIR, exist_ok=True)
     os.makedirs(VISUALS_DIR, exist_ok=True)
 
     # 1. Load Data
     df_cleaned = load_and_clean_data(DATA_PATH)
     if df_cleaned is None:
-        return # Stop if data loading failed
+        return
     
-    # 2. Train Classifier & Preprocessor
+    # 2. Save EDA Plots
+    save_eda_plots(df_cleaned, VISUALS_DIR) # <--- We run this new helper
+    
+    # 3. Train Classifier & Preprocessor
     preprocessor, rf_model = train_classifier_and_preprocessor(df_cleaned, VISUALS_DIR)
     
-    # 3. Train Regressor
+    # 4. Train Regressor
     lr_model = train_regressor(df_cleaned, preprocessor, VISUALS_DIR)
     
-    # 4. Train Clusterer
+    # 5. Train Clusterer
     kmeans_pipeline = train_clusterer(df_cleaned, VISUALS_DIR)
     
-    # 5. Save all models
+    # 6. Save all models
     models_to_save = {
         "preprocessor": preprocessor,
         "classifier_rf": rf_model,
@@ -249,6 +296,5 @@ def main_pipeline():
     print("--- [COMPLETE] Pipeline Finished Successfully ---")
     print("="*80 + "\n")
 
-# This allows you to run the script by typing `python scripts/train_model.py`
 if __name__ == "__main__":
     main_pipeline()
