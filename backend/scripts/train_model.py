@@ -43,14 +43,15 @@ def load_and_clean_data(data_path):
     print("\n" + "="*80)
     return df_cleaned
 
-def save_eda_plots(df_cleaned, visuals_dir):
+def save_eda_plots(df_cleaned):
     """
-    Saves all necessary EDA plots for the frontend dashboard.
+    Saves all necessary static EDA plots for the frontend dashboard.
     """
     print("\n--- [Helper] Saving All EDA Plots ---\n")
     sns.set_style('whitegrid')
     
     churn_palette = {0: "#3b82f6", 1: "#f97316"} # Blue (Stayed), Orange (Churned)
+    churn_labels = {0: 'Stayed', 1: 'Churned'}
 
     # Plot 1: Tenure vs. Churn
     plt.figure(figsize=(10, 6))
@@ -63,7 +64,7 @@ def save_eda_plots(df_cleaned, visuals_dir):
     if len(legend.texts) >= 2:
         legend.texts[0].set_text('Stayed')
         legend.texts[1].set_text('Churned')
-    plt.savefig(os.path.join(visuals_dir, 'tenure_vs_churn.svg'), bbox_inches='tight')
+    plt.savefig(os.path.join(VISUALS_DIR, 'tenure_vs_churn.svg'), bbox_inches='tight')
     print("Saved tenure_vs_churn.svg")
 
     # Plot 2: MonthlyCharges vs. Churn
@@ -77,10 +78,9 @@ def save_eda_plots(df_cleaned, visuals_dir):
     if len(legend.texts) >= 2:
         legend.texts[0].set_text('Stayed')
         legend.texts[1].set_text('Churned')
-    plt.savefig(os.path.join(visuals_dir, 'monthlycharges_vs_churn.svg'), bbox_inches='tight')
+    plt.savefig(os.path.join(VISUALS_DIR, 'monthlycharges_vs_churn.svg'), bbox_inches='tight')
     print("Saved monthlycharges_vs_churn.svg")
 
-    # --- [FIX 2: Updated Legend Logic] ---
     # Plot 3: TotalCharges vs. Churn
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_cleaned, x='TotalCharges', hue='Churn', 
@@ -92,7 +92,7 @@ def save_eda_plots(df_cleaned, visuals_dir):
     if len(legend.texts) >= 2:
         legend.texts[0].set_text('Stayed')
         legend.texts[1].set_text('Churned')
-    plt.savefig(os.path.join(visuals_dir, 'totalcharges_vs_churn.svg'), bbox_inches='tight')
+    plt.savefig(os.path.join(VISUALS_DIR, 'totalcharges_vs_churn.svg'), bbox_inches='tight')
     print("Saved totalcharges_vs_churn.svg")
     
     # Plot 4: Correlation Heatmap
@@ -101,7 +101,7 @@ def save_eda_plots(df_cleaned, visuals_dir):
     corr = numerical_df.corr()
     sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', linewidths=0.5)
     plt.title('Correlation Heatmap of Numerical Features', fontsize=16)
-    plt.savefig(os.path.join(visuals_dir, 'correlation_heatmap.svg'), bbox_inches='tight')
+    plt.savefig(os.path.join(VISUALS_DIR, 'correlation_heatmap.svg'), bbox_inches='tight')
     print("Saved correlation_heatmap.svg")
     
     plt.close('all') 
@@ -138,18 +138,26 @@ def train_classifier_and_preprocessor(df_cleaned):
     rf_model = RandomForestClassifier(random_state=42, n_estimators=100)
     rf_model.fit(X_train_c_processed, y_train_c)
     
-    y_pred_c = rf_model.predict(X_test_c_processed)
-    print("Random Forest Classifier Report:")
-    print(classification_report(y_test_c, y_pred_c))
+    # 1. Get the probabilities for class 1 (Churn)
+    y_probas = rf_model.predict_proba(X_test_c_processed)
+    y_probas_churn = y_probas[:, 1] # Get probabilities for the "Churn" class
     
-    # Calculate the accuracy score
-    acc = accuracy_score(y_test_c, y_pred_c)
+    # 2. Define our new threshold
+    NEW_THRESHOLD = 0.35
     
-    # Print it out, formatted as a percentage
-    print("\n--- Overall Model Accuracy ---")
-    print(f"Accuracy: {acc * 100:.2f}%\n")
-
+    # 3. Create new predictions based on the 0.35 threshold
+    y_pred_new_threshold = (y_probas_churn >= NEW_THRESHOLD).astype(int)
+    
+    # 4. Print the NEW report
+    print(f"--- [OPTIMIZED] Random Forest Classifier Report (Threshold = {NEW_THRESHOLD}) ---")
+    print(classification_report(y_test_c, y_pred_new_threshold, target_names=['No Churn', 'Churn']))
+    
+    # 5. Print the NEW accuracy
+    acc_new = accuracy_score(y_test_c, y_pred_new_threshold)
+    print(f"--- [OPTIMIZED] Overall Accuracy (Threshold = {NEW_THRESHOLD}): {acc_new * 100:.2f}% ---")
+    
     # Save Feature Importance Plot
+    print("\nSaving Feature Importance plot (as SVG)...")
     try:
         feature_names = preprocessor.get_feature_names_out()
         importances = rf_model.feature_importances_
@@ -165,15 +173,23 @@ def train_classifier_and_preprocessor(df_cleaned):
     plt.close()
 
     # Save Confusion Matrix Plot
+    print("Saving Confusion Matrix plot (as SVG)...")
     try:
-        cm = confusion_matrix(y_test_c, y_pred_c, labels=rf_model.classes_)
+        # --- [THE FIX] ---
+        # We create the confusion matrix based on our NEW, optimized predictions
+        cm = confusion_matrix(y_test_c, y_pred_new_threshold, labels=rf_model.classes_)
+        # -----------------
+        
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['No Churn', 'Churn'])
-        
-        # --- [FIX 1: Updated Grid Logic] ---
         disp.plot(cmap='Blues')
-        disp.ax_.grid(False)
+
+        ax = disp.ax_
+        ax.grid(False)
+
+        ax.axhline(0.5, color='gray', linestyle='--', lw=0.5)
+        ax.axvline(0.5, color='gray', linestyle='--', lw=0.5)
         
-        plt.title('Classifier Confusion Matrix')
+        plt.title(f'Classifier Confusion Matrix (Threshold = {NEW_THRESHOLD})')
         plt.savefig(os.path.join(VISUALS_DIR, 'confusion_matrix.svg'), bbox_inches='tight')
         print(f"Saved confusion_matrix.svg")
     except Exception as e:
@@ -183,7 +199,7 @@ def train_classifier_and_preprocessor(df_cleaned):
     
     return preprocessor, rf_model
 
-def train_regressor(df_cleaned, preprocessor, visuals_dir):
+def train_regressor(df_cleaned, preprocessor):
     """ Trains the Linear Regression model. """
     print("\n--- [Helper] Training Regressor ---\n")
     
@@ -216,7 +232,7 @@ def train_regressor(df_cleaned, preprocessor, visuals_dir):
     
     return lr_model
 
-def train_clusterer(df_cleaned, visuals_dir):
+def train_clusterer(df_cleaned):
     """ Trains the K-Means clustering pipeline. """
     print("\n--- [Helper] Training Clusterer ---\n")
     cluster_features = df_cleaned[['tenure', 'MonthlyCharges']]
@@ -278,16 +294,16 @@ def main_pipeline():
         return
     
     # 2. Save EDA Plots
-    save_eda_plots(df_cleaned, VISUALS_DIR) 
+    save_eda_plots(df_cleaned) 
     
     # 3. Train Classifier & Preprocessor
     preprocessor, rf_model = train_classifier_and_preprocessor(df_cleaned)
     
     # 4. Train Regressor
-    lr_model = train_regressor(df_cleaned, preprocessor, VISUALS_DIR)
+    lr_model = train_regressor(df_cleaned, preprocessor)
     
     # 5. Train Clusterer
-    kmeans_pipeline = train_clusterer(df_cleaned, VISUALS_DIR)
+    kmeans_pipeline = train_clusterer(df_cleaned)
     
     # 6. Save all models
     models_to_save = {
